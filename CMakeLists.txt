@@ -19,9 +19,10 @@ endif()
 # Threads
 find_package(Threads REQUIRED)
 
-# Vendored xxHash (header-only)
+# Vendored xxHash (header-only, fully inline)
 add_library(xxhash INTERFACE)
 target_include_directories(xxhash INTERFACE third_party/xxhash)
+target_compile_definitions(xxhash INTERFACE XXH_INLINE_ALL)
 
 # Core library
 add_library(dupfinder_core
