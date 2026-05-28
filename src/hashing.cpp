@@ -2,6 +2,7 @@
 
 #include <array>
 #include <fstream>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -19,21 +20,20 @@ HashValue hash_file(const std::filesystem::path& path) {
         throw std::runtime_error("Cannot open file: " + path.string());
     }
 
-    XXH3_state_t* state = XXH3_createState();
+    auto state = std::unique_ptr<XXH3_state_t, decltype(&XXH3_freeState)>(
+        XXH3_createState(), XXH3_freeState);
     if (!state) {
         throw std::runtime_error("XXH3_createState failed");
     }
-    XXH3_64bits_reset(state);
+    XXH3_64bits_reset(state.get());
 
     std::array<char, READ_BUF_SIZE> buf{};
     while (file.read(buf.data(), buf.size()) || file.gcount() > 0) {
         const auto n = static_cast<std::size_t>(file.gcount());
-        XXH3_64bits_update(state, buf.data(), n);
+        XXH3_64bits_update(state.get(), buf.data(), n);
     }
 
-    const HashValue h = XXH3_64bits_digest(state);
-    XXH3_freeState(state);
-    return h;
+    return XXH3_64bits_digest(state.get());
 }
 
 HashValue hash_file_prefix(const std::filesystem::path& path, std::size_t bytes) {

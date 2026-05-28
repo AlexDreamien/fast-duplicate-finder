@@ -28,10 +28,10 @@ parallel_hash(const std::vector<std::size_t>& idxs, std::size_t threads, Hasher 
     threads = std::min(threads, idxs.size());
     if (threads <= 1) {
         for (auto idx : idxs) {
-            HashValue h;
+            HashValue h = 0;
             try {
                 h = hasher(idx);
-            } catch (...) {
+            } catch (const std::runtime_error&) {
                 continue;
             }
             result[h].push_back(idx);
@@ -47,10 +47,10 @@ parallel_hash(const std::vector<std::size_t>& idxs, std::size_t threads, Hasher 
                 const std::size_t i = cursor.fetch_add(1, std::memory_order_relaxed);
                 if (i >= idxs.size()) return;
                 const std::size_t idx = idxs[i];
-                HashValue h;
+                HashValue h = 0;
                 try {
                     h = hasher(idx);
-                } catch (...) {
+                } catch (const std::runtime_error&) {
                     continue;
                 }
                 std::lock_guard<std::mutex> lock(mu);
